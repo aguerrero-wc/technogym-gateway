@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
@@ -9,4 +6,51 @@ generator client {
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+}
+
+model SigfoxCallback {
+  id          String @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Query parameters
+  time        String
+  seqNumber   String
+  
+  // Payload data
+  clientId       String
+  messageType    String
+  deviceType     String
+  device         String
+  data           String
+  lqi            String
+  linkQuality    String
+  operatorName   String
+  countryCode    String
+  deviceTypeId   String
+  
+  // Location data
+  latitude       Float?
+  longitude      Float?
+  radius         Int?
+  locationSource Int?
+  locationStatus Int?
+  
+  // Related models
+  duplicates     SigfoxDuplicate[]
+  
+  @@map("sigfox_callbacks")
+}
+
+model SigfoxDuplicate {
+  id         String @id @default(cuid())
+  bsId       String
+  rssi       Float
+  nbRep      Int
+  
+  // Foreign key
+  callbackId String
+  callback   SigfoxCallback @relation(fields: [callbackId], references: [id], onDelete: Cascade)
+  
+  @@map("sigfox_duplicates")
 }

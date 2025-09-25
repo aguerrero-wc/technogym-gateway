@@ -23,6 +23,33 @@ services:
       - technogym
 
 
+  middelware-service:
+    build:
+      context: .
+      target: dev
+    restart: unless-stopped
+    profiles: ["dev"]
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-dev:5432/${POSTGRES_DB}?schema=public
+    ports:
+      - "3000:3000"
+    volumes:
+      # Para desarrollo - hot reload
+      - .:/app
+      - /app/node_modules
+    networks:
+      - technogym
+    command: >
+      sh -c "
+        echo 'Esperando base de datos...' &&
+        npx prisma migrate deploy &&
+        echo 'Migraciones aplicadas' &&
+        npm run dev
+      "
+
+
 volumes:
   technogym_project_data:
 

@@ -1,29 +1,5 @@
 services:
-  postgres-dev:
-    image: postgres:16
-    restart: unless-stopped
-    profiles: ["dev"]
-    environment:
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_NON_ROOT_USER=${POSTGRES_NON_ROOT_USER}
-      - POSTGRES_NON_ROOT_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
-    volumes:
-      - technogym_project_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    ports:
-      - "${POSTGRES_PORT}:5432"
-    networks:
-      - technogym
-
-
-  middelware-service:
+  middelware-messages:
     build:
       context: .
       target: dev
@@ -32,11 +8,10 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-dev:5432/${POSTGRES_DB}?schema=public
+      - DATABASE_URL=postgresql://${POSTGRES_USER_MESSAGES}:${POSTGRES_PASSWORD_MESSAGES}@db-middelware-messages:5432/${POSTGRES_DB_MESSAGES}?schema=public
     ports:
       - "3000:3000"
     volumes:
-      # Para desarrollo - hot reload
       - .:/app
       - /app/node_modules
     networks:
@@ -44,14 +19,124 @@ services:
     command: >
       sh -c "
         echo 'Esperando base de datos...' &&
+        npx prisma generate &&
+        echo 'Cliente Prisma generado' &&
         npx prisma migrate deploy &&
         echo 'Migraciones aplicadas' &&
         npm run dev
       "
+  db-middelware-messages:
+    image: postgres:16
+    restart: unless-stopped
+    profiles: ["dev","ec2"]
+    environment:
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      # - POSTGRES_DB=${POSTGRES_DB}
+      # - POSTGRES_USER=${POSTGRES_USER}
+      # - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # - POSTGRES_NON_ROOT_USER=${POSTGRES_NON_ROOT_USER}
+      # - POSTGRES_NON_ROOT_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_MESSAGES}
+      - POSTGRES_USER=${POSTGRES_USER_MESSAGES}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MESSAGES}
+    volumes:
+      - db_messages_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER_MESSAGES} -d ${POSTGRES_DB_MESSAGES}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${POSTGRES_PORT_MESSAGES}:5432"
+    networks:
+      - technogym
 
+  db-api:
+    image: postgres:16
+    restart: unless-stopped
+    profiles: ["databases-google-functions"]
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_API}
+      - POSTGRES_USER=${POSTGRES_USER_API}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_API}
+    volumes:
+      - db_api_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER_API} -d ${POSTGRES_DB_API}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${POSTGRES_PORT_API}:5432"
+    networks:
+      - technogym
+
+  db-device-history:
+    image: postgres:16
+    restart: unless-stopped
+    profiles: ["databases-google-functions"]
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_DEVICE_HISTORY}
+      - POSTGRES_USER=${POSTGRES_USER_DEVICE_HISTORY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_DEVICE_HISTORY}
+    volumes:
+      - db_device_history_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER_DEVICE_HISTORY} -d ${POSTGRES_DB_DEVICE_HISTORY}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${POSTGRES_PORT_DEVICE_HISTORY}:5432"
+    networks:
+      - technogym
+
+  db-dot-message:
+    image: postgres:16
+    restart: unless-stopped
+    profiles: ["databases-google-functions"]
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_DOT_MESSAGE}
+      - POSTGRES_USER=${POSTGRES_USER_DOT_MESSAGE}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_DOT_MESSAGE}
+    volumes:
+      - db_dot_message_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER_DOT_MESSAGE} -d ${POSTGRES_DB_DOT_MESSAGE}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${POSTGRES_PORT_DOT_MESSAGE}:5432"
+    networks:
+      - technogym
+
+  db-stock-history:
+    image: postgres:16
+    restart: unless-stopped
+    profiles: ["databases-google-functions"]
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_STOCK_HISTORY}
+      - POSTGRES_USER=${POSTGRES_USER_STOCK_HISTORY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STOCK_HISTORY}
+    volumes:
+      - db_stock_history_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h ${POSTGRES_HOST} -U ${POSTGRES_USER_STOCK_HISTORY} -d ${POSTGRES_DB_STOCK_HISTORY}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "${POSTGRES_PORT_STOCK_HISTORY}:5432"
+    networks:
+      - technogym
 
 volumes:
-  technogym_project_data:
+    db_messages_data:
+    db_api_data:
+    db_device_history_data:
+    db_dot_message_data:
+    db_stock_history_data:
 
 networks:
   technogym:

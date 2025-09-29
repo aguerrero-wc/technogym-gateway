@@ -10,7 +10,7 @@ services:
       - PORT=3000
       - DATABASE_URL=postgresql://${POSTGRES_USER_MESSAGES}:${POSTGRES_PASSWORD_MESSAGES}@db-middelware-messages:5432/${POSTGRES_DB_MESSAGES}?schema=public
     ports:
-      - "3000:3000"
+      - "${PORT_MIDDLEWARE}:3000"
     volumes:
       - .:/app
       - /app/node_modules

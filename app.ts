@@ -3,6 +3,7 @@
 import express from 'express';
 import cors from 'cors';
 import sigfoxRoutes from './routes/sigfox';
+import firebaseRoutes  from './routes/firebaseRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/sigfox', sigfoxRoutes);
+app.use('/api', firebaseRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
